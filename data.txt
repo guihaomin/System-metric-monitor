@@ -1,0 +1,5 @@
+Fri Sep 15 13:31:02 2017
+System_CPU_Usage 0.757575757576 % cgoldberg 1
+User_CPU_Usage 1.26262626263 % cgoldberg 1
+Load_Avg 0.25 cnt build_in 5min
+Run Queue Length 1 cnt build_in 5min
