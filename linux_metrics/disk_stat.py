@@ -91,15 +91,15 @@ def disk_usage(path):
 
 def disk_reads_writes_info(device, sample_duration=1):
     """Return number of disk (reads, writes) per sec during the sample_duration."""
-    readSum1=readSum()/1000.0
-    writeSum1=writeSum()/1000.0
+    readSum1=readSum()
+    writeSum1=writeSum()
     with open('/proc/diskstats') as f1:
         with open('/proc/diskstats') as f2:
             content1 = f1.read()
             time.sleep(sample_duration)
             content2 = f2.read()
-    readSum2=readSum()/1000.0
-    writeSum2=writeSum()/1000.0
+    readSum2=readSum()
+    writeSum2=writeSum()
     sep = '%s ' % device
     found = False
     for line in content1.splitlines():
