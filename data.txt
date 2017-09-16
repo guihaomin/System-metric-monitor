@@ -1,5 +1,11 @@
-Fri Sep 15 13:31:02 2017
-System_CPU_Usage 0.757575757576 % cgoldberg 1
-User_CPU_Usage 1.26262626263 % cgoldberg 1
-Load_Avg 0.25 cnt build_in 5min
-Run Queue Length 1 cnt build_in 5min
+Sat Sep 16 10:33:32 2017
+metric Unit Tool/Source Monitoring_Interval(sec) is_Cumulative Priority Transformation Desception
+System_CPU_Usage 2.82776349614 % cgoldberg 1
+User_CPU_Usage 6.16966580977 % cgoldberg 1
+Load_Avg 0.78 cnt build_in 300
+Run_Queue_Length 1 cnt build_in NIL
+Total#Process 5859 cnt add NIL
+Runing#Process 1 cnt cgoldberg NIL
+Sleeping#Process 228 cnt add NIL
+#Threads 640 cnt add NIL
+Blocked#Process 0 cnt cgoldberg NIL

@@ -31,7 +31,7 @@
 
 
 import time
-
+import os
 
 
 def cpu_times():
@@ -84,7 +84,8 @@ def procs_running():
     """Return number of processes in runnable state."""
     
     return __proc_stat('procs_running')
-
+def procs_all():
+    return __proc_stat('processes')
 
 
 def procs_blocked():
@@ -177,3 +178,35 @@ def __proc_stat(stat):
         for line in f:
             if line.startswith(stat):
                 return int(line.split()[1])
+def __pid_stat(stat,pidF):
+    with open(pidF) as f:
+        for line in f:
+            if line.startswith(stat):
+                return int(line.split()[1])
+def __pid_statS(stat,pidF):
+    with open(pidF) as f:
+        for line in f:
+            if line.startswith(stat):
+                return line.split()[1]
+def parseDir():
+    list=[]
+    files=os.listdir("/proc")
+    for file in files:
+        m=os.path.join("/proc",file)
+        if(os.path.isdir(m) and file.isdigit()):
+            list.append(os.path.join(m,"status"))
+    return list
+def threadsNum():
+    count=0
+    pids=parseDir()
+    for process in pids:
+        count+=__pid_stat("Threads:",process)
+    return count
+def sleepingNum():
+    count=0
+    pids=parseDir()
+    for process in pids:
+        if __pid_statS("State:",process)=='S':
+            count+=1
+    return count    
+                        
