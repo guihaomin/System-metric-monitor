@@ -1,5 +1,7 @@
 import linux_metrics as lm
 import time
+#need sudo
+DISK_DEVICE="sda"
 sample_duration=1
 def stdPrint():
     f=open("data.txt","w")
@@ -7,6 +9,7 @@ def stdPrint():
     f.write("metric Unit Tool/Source Monitoring_Interval(sec) is_Cumulative Priority Transformation Desception\n")
     writeCPU(f)
     writeProcess(f)
+    writeDisk(f)
     f.close()
 
 def writeCPU(f):
@@ -63,6 +66,29 @@ def writeProcess(f):
     f.write("cnt ")
     f.write("cgoldberg ")
     f.write("NIL")
+def writeDisk(f):
+    f.write("\n#Pysical_Disk_Read ")
+    numRead,numWrite,amountRead,amountWrite=lm.disk_stat.disk_reads_writes_info(DISK_DEVICE,sample_duration)
+    f.write(str(numRead)+" ")
+    f.write("cnt ")
+    f.write("cgoldberg ")
+    f.write("1")
+    f.write("\n#Pysical_Disk_Write ")
+    f.write(str(numWrite)+" ")
+    f.write("cnt ")
+    f.write("cgoldberg ")
+    f.write("1 ")
+    f.write("\nAmount_Disk_Read ")
+    f.write(str(amountRead)+" ")
+    f.write("kb/s ")
+    f.write("merge ")
+    f.write("1")
+    f.write("\nAmount_Disk_Write ")
+    f.write(str(amountWrite)+" ")
+    f.write("kb/s ")
+    f.write("merge ")
+    f.write("1")
+    
 stdPrint()
     
     

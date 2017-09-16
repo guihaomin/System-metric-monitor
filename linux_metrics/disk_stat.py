@@ -29,7 +29,7 @@
     
 """
 
-
+import os
 import time
 from subprocess import Popen, PIPE
 
@@ -89,13 +89,17 @@ def disk_usage(path):
     return (device, int(size), int(used), int(free), percent, mountpoint)
 
 
-def disk_reads_writes_persec(device, sample_duration=1):
+def disk_reads_writes_info(device, sample_duration=1):
     """Return number of disk (reads, writes) per sec during the sample_duration."""
+    readSum1=readSum()/1000.0
+    writeSum1=writeSum()/1000.0
     with open('/proc/diskstats') as f1:
         with open('/proc/diskstats') as f2:
             content1 = f1.read()
             time.sleep(sample_duration)
             content2 = f2.read()
+    readSum2=readSum()/1000.0
+    writeSum2=writeSum()/1000.0
     sep = '%s ' % device
     found = False
     for line in content1.splitlines():
@@ -114,10 +118,33 @@ def disk_reads_writes_persec(device, sample_duration=1):
             num_writes2 = int(fields[4])
             break            
     reads_per_sec = (num_reads2 - num_reads1) / float(sample_duration)
-    writes_per_sec = (num_writes2 - num_writes1) / float(sample_duration)   
-    return (reads_per_sec, writes_per_sec)
+    writes_per_sec = (num_writes2 - num_writes1) / float(sample_duration)
+    return (reads_per_sec, writes_per_sec,readSum2-readSum1,writeSum2-writeSum1)
 
-
-
+def __pid_stat(stat,pidF):
+    with open(pidF) as f:
+        for line in f:
+            if line.startswith(stat):
+                return int(line.split()[1])
+def parseDir():
+    list=[]
+    files=os.listdir("/proc")
+    for file in files:
+        m=os.path.join("/proc",file)
+        if(os.path.isdir(m) and file.isdigit()):
+            list.append(os.path.join(m,"io"))
+    return list
+def readSum():
+    total=0
+    pids=parseDir()
+    for process in pids:
+        total+=__pid_stat("read_bytes:",process)/1000.0
+    return total
+def writeSum():
+    total=0
+    pids=parseDir()
+    for process in pids:
+        total+=__pid_stat("write_bytes:",process)/1000.0
+    return total
 class DiskError(Exception):
     pass
