@@ -1,15 +1,17 @@
-Sat Sep 16 23:41:35 2017
+Tue Sep 19 09:09:31 2017
 metric Unit Tool/Source Monitoring_Interval(sec) is_Cumulative Priority Transformation Desception
-System_CPU_Usage 2.33947237432 % cgoldberg 5
-User_CPU_Usage 6.12244897959 % cgoldberg 5
-Load_Avg 0.34 cnt build_in 300
+System_CPU_Usage 0.0 % cgoldberg 1
+User_CPU_Usage 0.501253132832 % cgoldberg 1
+Load_Avg 0.30 cnt build_in 300
 Run_Queue_Length 1 cnt build_in NIL
-Total#Process 7549 cnt add NIL
+Total#Process 2814 cnt add NIL
 Runing#Process 1 cnt cgoldberg NIL
-Sleeping#Process 207 cnt add NIL
-#Threads 397 cnt add NIL
-Blocked#Process 2 cnt cgoldberg NIL
-#Pysical_Disk_Read 0.2 cnt cgoldberg 1
-#Pysical_Disk_Write 95.0 cnt cgoldberg 1 
-Amount_Disk_Read 4.09600000002 kb/s merge 1
-Amount_Disk_Write 4829.184 kb/s merge 1
+Sleeping#Process 208 cnt add NIL
+#Threads 438 cnt add NIL
+Blocked#Process 0 cnt cgoldberg NIL
+Used Physical Memory 26.1684341797 % cgoldberg NIL
+Unused Pysical Memory 73.8315658203 % cgoldberg NIL
+#Pysical_Disk_Read 0.0 cnt cgoldberg 1
+#Pysical_Disk_Write 0.0 cnt cgoldberg 1 
+Amount_Disk_Read 0.0 kb merge 1
+Amount_Disk_Write 0.0 kb merge 1

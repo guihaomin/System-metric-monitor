@@ -146,5 +146,5 @@ def writeSum():
     for process in pids:
         total+=__pid_stat("write_bytes:",process)/1000.0
     return total
-class DiskError(Exception):
-    pass
+#class DiskError(Exception):
+  #  pass

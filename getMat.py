@@ -9,7 +9,9 @@ def stdPrint():
     f.write("metric Unit Tool/Source Monitoring_Interval(sec) is_Cumulative Priority Transformation Desception\n")
     writeCPU(f)
     writeProcess(f)
+    writeMem(f)
     writeDisk(f)
+    
     f.close()
 
 def writeCPU(f):
@@ -80,14 +82,30 @@ def writeDisk(f):
     f.write("1 ")
     f.write("\nAmount_Disk_Read ")
     f.write(str(amountRead)+" ")
-    f.write("kb/s ")
+    f.write("kb ")
     f.write("merge ")
     f.write("1")
     f.write("\nAmount_Disk_Write ")
     f.write(str(amountWrite)+" ")
-    f.write("kb/s ")
+    f.write("kb ")
     f.write("merge ")
     f.write("1")
+
+def writeMem(f):
+    stat=lm.mem_stat.mem_stats()
+    memTotal=stat[1]
+    memFree=stat[3]
+    memUsed=memTotal-memFree
+    f.write("\nUsed Physical Memory ")
+    f.write(str(memUsed*100.0/memTotal)+" ")
+    f.write("% ")
+    f.write("cgoldberg ")
+    f.write("NIL")
+    f.write("\nUnused Pysical Memory ")
+    f.write(str(memFree*100.0/memTotal)+" ")
+    f.write("% ")
+    f.write("cgoldberg ")
+    f.write("NIL")
     
 stdPrint()
     
