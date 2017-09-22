@@ -19,11 +19,7 @@
 #
 
 
-
-from .cpu_stat import *
-from .disk_stat import *
-from .mem_stat import *
-from .net_stat import *
+from .integrated import *
 
 
 __version__ = '0.1.5dev'

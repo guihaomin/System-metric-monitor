@@ -2,7 +2,7 @@ import os
 import time
 from subprocess import Popen, PIPE
 class metric:
-    def __init__(self,sample_duration,device):
+    def __init__(self,sample_duration,device,interface=""):
         self.reads_per_sec=0
         self.writes_per_sec=0
         self.write_amount=0
@@ -28,6 +28,36 @@ class metric:
         self.swap_out=0
         self.page_in=0
         self.page_out=0
+        self.interface=interface
+        self.recieve_bytes=0       #bytes persec
+        self.transmit_bytes=0      #bytes persec
+        self.recieve_packages=0    #count persec
+        self.transmit_packages=0   #count persec
+        self.connections=0
+    def reset(self):
+        self.disk_reads_writes_info()
+        self.connection()
+        self.mem_stats()
+        self.cpu_percents()
+        self.procs_blocked()
+        self.sleepingNum()
+        self.threadsNum()
+        self.run_queue_length()
+        self.load_avg()
+    def connection(self):
+        with open('/proc/net/sockstat') as f:
+            for line in f:
+                if line.startswith('TCP:'):
+                    tcp_connection=int(line.split()[2])
+                elif line.startswith('UDP:'):
+                    udp_connection=int(line.split()[2])
+        with open('/proc/net/sockstat6') as f:
+            for line in f:
+                if line.startswith('TCP6:'):
+                    tcp6_connection=int(line.split()[2])
+                elif line.startswith('UDP6:'):
+                    udp6_connection=int(line.split()[2])
+        self.connections=tcp_connection+tcp6_connection+udp_connection+udp6_connection
     def mem_stats(self):
         with open('/proc/meminfo') as f:
             for line in f:
@@ -54,31 +84,10 @@ class metric:
                 elif line.startswith('pswpout'):
                     self.swap_out=int(line.split()[1])
         self.used_mem=(mem_total-mem_free)/float(mem_total)
-        self.free_mem=mem_free/mem_total
+        self.free_mem=mem_free/float(mem_total)
         self.swap_total=swap_total
 
-    def disk_busy(self):
-        with open('/proc/diskstats') as f1:
-            with open('/proc/diskstats') as f2:
-                content1 = f1.read()
-                time.sleep(self.sample_duration)
-                content2 = f2.read()
-        sep = '%s ' % self.device
-        found = False
-        for line in content1.splitlines():
-            if sep in line:
-                found = True
-                io_ms1 = line.strip().split(sep)[1].split()[9]
-                break
-        if not found:
-            raise DiskError('device not found: %r' % device)
-        for line in content2.splitlines():
-            if sep in line:
-                io_ms2 = line.strip().split(sep)[1].split()[9]
-                break            
-        delta = int(io_ms2) - int(io_ms1)
-        total = sample_duration * 1000
-        return 100 * (float(delta) / total)
+
     def cpu_percents(self):
     
         
@@ -102,11 +111,28 @@ class metric:
             with open('/proc/diskstats') as f2:
                 f3=open('/proc/stat')
                 f4=open('/proc/stat')
+                for n1 in open('/proc/net/dev'):
+                    if self.interface in n1:
+                        data = n1.split('%s:' % self.interface)[1].split()
+                        rx_bytes, tx_bytes= (int(data[0]), int(data[8]))
+                        rx_pack,tx_pack=(int(data[1]),int(data[9]))
                 line1=f3.readline()
                 content1 = f1.read()
                 time.sleep(float(self.sample_duration))
                 content2 = f2.read()
-                
+                for n1 in open('/proc/net/dev'):
+                    if self.interface in n1:
+                        data = n1.split('%s:' % self.interface)[1].split()
+                        rx_bytes2, tx_bytes2= (int(data[0]), int(data[8]))
+                        rx_pack2,tx_pack2=(int(data[1]),int(data[9]))
+                self.recieve_bytes=rx_bytes2-rx_bytes
+                self.transmit_bytes=tx_bytes2-tx_bytes
+                self.recieve_packages=rx_pack2-rx_pack
+                self.transmit_packages=tx_pack2-tx_pack
+                self.transmit_packages/=float(self.sample_duration)
+                self.recieve_packages/=float(self.sample_duration)
+                self.recieve_bytes/=float(self.sample_duration)
+                self.transmit_bytes/=float(self.sample_duration)
                 line2=f4.readline()
                 f3.close()
                 f4.close()
@@ -190,7 +216,7 @@ class metric:
                 list.append(os.path.join(m,"status"))
         return list
     def procs_blocked(self):
-        self.blocked_process=int(__proc_stat('procs_blocked'))
+        self.blocked_process=int(self.__pid_stat('procs_blocked'))
     def sleepingNum(self):
         count=0
         pids=self.parseDir()
@@ -214,14 +240,14 @@ class metric:
     
         self.load_avgs = [float(x) for x in line.split()[:3]]
 
-a=metric("5","sda")
-a.disk_reads_writes_info()
-#a.cpu_percents()
-a.threadsNum()
-a.sleepingNum()
-a.run_queue_length()
-a.load_avg()
-print a.run_queue
+a=metric("5","sda","wlp2s0")
+#a.disk_reads_writes_info()
+a.reset()
+
+#print a.recieve_bytes/1024.0
+#print a.transmit_bytes/1024.0
+#print a.transmit_packages
 print a.load_avgs
-print a.disk_busy
-print a.total_process
+#a.mem_stats()
+#a.cpu_percents()
+#print a.free_mem
