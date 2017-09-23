@@ -44,6 +44,7 @@ class metric:
         self.threadsNum()
         self.run_queue_length()
         self.load_avg()
+        self.procs_running()
     def connection(self):
         with open('/proc/net/sockstat') as f:
             for line in f:
@@ -73,18 +74,8 @@ class metric:
                     swap_total = (int(line.split()[1]) * 1024)
                 elif line.startswith('SwapFree: '):
                     swap_free = (int(line.split()[1]) * 1024)
-        with open('/proc/vmstat') as f:
-            for line in f:
-                if line.startswith('pgpgin'):
-                    self.page_in=int(line.split()[1])
-                elif line.startswith('pgpgout'):
-                    self.page_out=int(line.split()[1])
-                elif line.startswith('pswpin'):
-                    self.swap_in=int(line.split()[1])
-                elif line.startswith('pswpout'):
-                    self.swap_out=int(line.split()[1])
-        self.used_mem=(mem_total-mem_free)/float(mem_total)
-        self.free_mem=mem_free/float(mem_total)
+        self.used_mem=(mem_total-mem_free)/float(mem_total)*100.0
+        self.free_mem=mem_free/float(mem_total)*100.0
         self.swap_total=swap_total
 
 
@@ -103,7 +94,7 @@ class metric:
             'irq': percents[5],
             'softirq': percents[6],
         }
-    def disk_reads_writes_info(self):
+    def disk_reads_writes_info(self): #it is actually combination of lots of operation.....
         """Return number of disk (reads, writes) per sec during the sample_duration."""
         readSum1=self.readSum()
         writeSum1=self.writeSum()
@@ -111,6 +102,16 @@ class metric:
             with open('/proc/diskstats') as f2:
                 f3=open('/proc/stat')
                 f4=open('/proc/stat')
+                with open('/proc/vmstat') as f:
+                    for line in f:
+                        if line.startswith('pgpgin'):
+                            page_in=int(line.split()[1])
+                        elif line.startswith('pgpgout'):
+                            page_out=int(line.split()[1])
+                        elif line.startswith('pswpin'):
+                            swap_in=int(line.split()[1])
+                        elif line.startswith('pswpout'):
+                            swap_out=int(line.split()[1])
                 for n1 in open('/proc/net/dev'):
                     if self.interface in n1:
                         data = n1.split('%s:' % self.interface)[1].split()
@@ -120,6 +121,20 @@ class metric:
                 content1 = f1.read()
                 time.sleep(float(self.sample_duration))
                 content2 = f2.read()
+                with open('/proc/vmstat') as f:
+                    for line in f:
+                        if line.startswith('pgpgin'):
+                            page_in2=int(line.split()[1])
+                        elif line.startswith('pgpgout'):
+                            page_out2=int(line.split()[1])
+                        elif line.startswith('pswpin'):
+                            swap_in2=int(line.split()[1])
+                        elif line.startswith('pswpout'):
+                            swap_out2=int(line.split()[1])
+                self.page_in=page_in2-page_in
+                self.page_out=page_out2-page_out
+                self.swap_in=swap_in2-swap_in
+                self.swap_out=swap_out2-swap_out
                 for n1 in open('/proc/net/dev'):
                     if self.interface in n1:
                         data = n1.split('%s:' % self.interface)[1].split()
@@ -217,6 +232,8 @@ class metric:
         return list
     def procs_blocked(self):
         self.blocked_process=int(self.__pid_stat('procs_blocked'))
+    def procs_running(self):
+        self.running_process=int(self. __pid_stat('procs_running'))
     def sleepingNum(self):
         count=0
         pids=self.parseDir()
@@ -240,14 +257,11 @@ class metric:
     
         self.load_avgs = [float(x) for x in line.split()[:3]]
 
-a=metric("5","sda","wlp2s0")
 #a.disk_reads_writes_info()
-a.reset()
 
 #print a.recieve_bytes/1024.0
 #print a.transmit_bytes/1024.0
 #print a.transmit_packages
-print a.load_avgs
 #a.mem_stats()
 #a.cpu_percents()
 #print a.free_mem
