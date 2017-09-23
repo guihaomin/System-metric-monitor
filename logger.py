@@ -43,5 +43,6 @@ page_in=assemble("page-in",met.page_in,"count",interval,"Yes","total")
 logger.info(page_in)
 page_out=assemble("page-out",met.page_out,"count",interval,"Yes","total")
 logger.info(page_out)
-swap_total=assemble("swap-allocated",met.swap_total,"idk",0,"No","-")
+swap_total=assemble("swap-allocated",met.swap_total,"",0,"No","-")
 logger.info(swap_total)
+disk_read=assemble("#physical_disk_read",met.reads_per_sec,""
