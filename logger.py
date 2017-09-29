@@ -13,7 +13,7 @@ file_handler=logging.FileHandler("metric.log")
 logger.addHandler(file_handler)
 logger.setLevel(logging.INFO)
 file_handler.setFormatter(formatter)
-met=lm.integrated.metric(interval,'sda',"wlp2s0")
+met=lm.integrated.metric(interval,'sda',"eno0")
 while True:
     print("sleeping...")
     time.sleep(refresh_interval)
