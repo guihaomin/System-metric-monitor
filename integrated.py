@@ -34,6 +34,7 @@ class metric:
         self.recieve_packages=0    #count persec
         self.transmit_packages=0   #count persec
         self.connections=0
+        self.disconnections=0
     def reset(self):
         self.disk_reads_writes_info()
         self.connection()
@@ -44,6 +45,7 @@ class metric:
         self.threadsNum()
         self.run_queue_length()
         self.load_avg()
+        
     def connection(self):
         with open('/proc/net/sockstat') as f:
             for line in f:
@@ -58,6 +60,24 @@ class metric:
                 elif line.startswith('UDP6:'):
                     udp6_connection=int(line.split()[2])
         self.connections=tcp_connection+tcp6_connection+udp_connection+udp6_connection
+    def list_connection(self,connection_list):
+        with open('/proc/net/tcp') as f:
+            for line in f:
+                if not line.strip(" ").startswith("sl"):
+                    connection_list.append(str(line.split()[1])+str(line.split()[2]))
+        with open('/proc/net/tcp6') as f:
+            for line in f:
+                if not line.strip(" ").startswith("sl"):
+                    connection_list.append(str(line.split()[1])+str(line.split()[2]))
+        with open('/proc/net/udp') as f:
+            for line in f:
+                if not line.strip(" ").startswith("sl"):
+                    connection_list.append(str(line.split()[1])+str(line.split()[2]))
+        with open('/proc/net/udp6') as f:
+            for line in f:
+                if not line.strip(" ").startswith("sl"):
+                    connection_list.append(str(line.split()[1])+str(line.split()[2]))
+            
     def mem_stats(self):
         with open('/proc/meminfo') as f:
             for line in f:
@@ -107,6 +127,8 @@ class metric:
         """Return number of disk (reads, writes) per sec during the sample_duration."""
         readSum1=self.readSum()
         writeSum1=self.writeSum()
+        connections_before=[]
+        connections_after=[]
         with open('/proc/diskstats') as f1:
             with open('/proc/diskstats') as f2:
                 f3=open('/proc/stat')
@@ -118,7 +140,13 @@ class metric:
                         rx_pack,tx_pack=(int(data[1]),int(data[9]))
                 line1=f3.readline()
                 content1 = f1.read()
+                self.list_connection(connections_before)
                 time.sleep(float(self.sample_duration))
+                self.list_connection(connections_after)
+                for item in connections_before:
+                    if not item in connections_after:
+                        self.disconnections+=1
+                        
                 content2 = f2.read()
                 for n1 in open('/proc/net/dev'):
                     if self.interface in n1:
@@ -240,14 +268,15 @@ class metric:
     
         self.load_avgs = [float(x) for x in line.split()[:3]]
 
-a=metric("5","sda","wlp2s0")
-#a.disk_reads_writes_info()
-a.reset()
+a=metric("10","sda","wlp2s0")
+a.disk_reads_writes_info()
+print a.disconnections
+#a.test()
+#print a.connection_list
 
 #print a.recieve_bytes/1024.0
 #print a.transmit_bytes/1024.0
 #print a.transmit_packages
-print a.load_avgs
 #a.mem_stats()
 #a.cpu_percents()
 #print a.free_mem

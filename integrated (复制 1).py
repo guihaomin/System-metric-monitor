@@ -34,8 +34,6 @@ class metric:
         self.recieve_packages=0    #count persec
         self.transmit_packages=0   #count persec
         self.connections=0
-        self.disconnections=0
-        self.connections_before=[]
     def reset(self):
         self.disk_reads_writes_info()
         self.connection()
@@ -46,26 +44,8 @@ class metric:
         self.threadsNum()
         self.run_queue_length()
         self.load_avg()
-        self.procs_running()
-    def list_connection(self,connection_list):
-        with open('/proc/net/tcp') as f:
-            for line in f:
-                if not line.strip(" ").startswith("sl"):
-                    connection_list.append(str(line.split()[1])+str(line.split()[2]))
-        with open('/proc/net/tcp6') as f:
-            for line in f:
-                if not line.strip(" ").startswith("sl"):
-                    connection_list.append(str(line.split()[1])+str(line.split()[2]))
-        with open('/proc/net/udp') as f:
-            for line in f:
-                if not line.strip(" ").startswith("sl"):
-                    connection_list.append(str(line.split()[1])+str(line.split()[2]))
-        with open('/proc/net/udp6') as f:
-            for line in f:
-                if not line.strip(" ").startswith("sl"):
-                    connection_list.append(str(line.split()[1])+str(line.split()[2]))
-    def connection(self):#this is weird the system log info(/proc/net/sockstat) is not same as info in count /proc/net/tcp, use info in tcp
-        """with open('/proc/net/sockstat') as f:
+    def connection(self):
+        with open('/proc/net/sockstat') as f:
             for line in f:
                 if line.startswith('TCP:'):
                     tcp_connection=int(line.split()[2])
@@ -77,9 +57,7 @@ class metric:
                     tcp6_connection=int(line.split()[2])
                 elif line.startswith('UDP6:'):
                     udp6_connection=int(line.split()[2])
-        self.connections=tcp_connection+tcp6_connection+udp_connection+udp6_connection"""
-        self.connections=len(self.connections_before)
-        
+        self.connections=tcp_connection+tcp6_connection+udp_connection+udp6_connection
     def mem_stats(self):
         with open('/proc/meminfo') as f:
             for line in f:
@@ -95,8 +73,18 @@ class metric:
                     swap_total = (int(line.split()[1]) * 1024)
                 elif line.startswith('SwapFree: '):
                     swap_free = (int(line.split()[1]) * 1024)
-        self.used_mem=(mem_total-mem_free)/float(mem_total)*100.0
-        self.free_mem=mem_free/float(mem_total)*100.0
+        with open('/proc/vmstat') as f:
+            for line in f:
+                if line.startswith('pgpgin'):
+                    self.page_in=int(line.split()[1])
+                elif line.startswith('pgpgout'):
+                    self.page_out=int(line.split()[1])
+                elif line.startswith('pswpin'):
+                    self.swap_in=int(line.split()[1])
+                elif line.startswith('pswpout'):
+                    self.swap_out=int(line.split()[1])
+        self.used_mem=(mem_total-mem_free)/float(mem_total)
+        self.free_mem=mem_free/float(mem_total)
         self.swap_total=swap_total
 
 
@@ -115,26 +103,14 @@ class metric:
             'irq': percents[5],
             'softirq': percents[6],
         }
-    def disk_reads_writes_info(self): #it is actually combination of lots of operation.....
+    def disk_reads_writes_info(self):
         """Return number of disk (reads, writes) per sec during the sample_duration."""
-        connections_before=[]
-        connections_after=[]
         readSum1=self.readSum()
         writeSum1=self.writeSum()
         with open('/proc/diskstats') as f1:
             with open('/proc/diskstats') as f2:
                 f3=open('/proc/stat')
                 f4=open('/proc/stat')
-                with open('/proc/vmstat') as f:
-                    for line in f:
-                        if line.startswith('pgpgin'):
-                            page_in=int(line.split()[1])
-                        elif line.startswith('pgpgout'):
-                            page_out=int(line.split()[1])
-                        elif line.startswith('pswpin'):
-                            swap_in=int(line.split()[1])
-                        elif line.startswith('pswpout'):
-                            swap_out=int(line.split()[1])
                 for n1 in open('/proc/net/dev'):
                     if self.interface in n1:
                         data = n1.split('%s:' % self.interface)[1].split()
@@ -142,29 +118,8 @@ class metric:
                         rx_pack,tx_pack=(int(data[1]),int(data[9]))
                 line1=f3.readline()
                 content1 = f1.read()
-                self.list_connection(self.connections_before)
-                
                 time.sleep(float(self.sample_duration))
-
-                self.list_connection(connections_after)
-                for item in self.connections_before:
-                    if not item in connections_after:
-                        self.disconnections+=1
                 content2 = f2.read()
-                with open('/proc/vmstat') as f:
-                    for line in f:
-                        if line.startswith('pgpgin'):
-                            page_in2=int(line.split()[1])
-                        elif line.startswith('pgpgout'):
-                            page_out2=int(line.split()[1])
-                        elif line.startswith('pswpin'):
-                            swap_in2=int(line.split()[1])
-                        elif line.startswith('pswpout'):
-                            swap_out2=int(line.split()[1])
-                self.page_in=page_in2-page_in
-                self.page_out=page_out2-page_out
-                self.swap_in=swap_in2-swap_in
-                self.swap_out=swap_out2-swap_out
                 for n1 in open('/proc/net/dev'):
                     if self.interface in n1:
                         data = n1.split('%s:' % self.interface)[1].split()
@@ -237,15 +192,13 @@ class metric:
         total=0
         pids=self.parseDirD()
         for process in pids:
-            if os.path.isfile(process):
-                total+=int(self.__pid_stat("read_bytes:",process))
+            total+=int(self.__pid_stat("read_bytes:",process))/1000.0
         return total
     def writeSum(self):
         total=0
         pids=self.parseDirD()
         for process in pids:
-            if os.path.isfile(process):
-                total+=float(self.__pid_stat("write_bytes:",process))
+            total+=float(self.__pid_stat("write_bytes:",process))/1000.0
         return total
     def __pid_stat(self,stat,dir="/proc/stat"):
         with open(dir) as f:
@@ -264,22 +217,18 @@ class metric:
         return list
     def procs_blocked(self):
         self.blocked_process=int(self.__pid_stat('procs_blocked'))
-    def procs_running(self):
-        self.running_process=int(self. __pid_stat('procs_running'))
     def sleepingNum(self):
         count=0
         pids=self.parseDir()
         for process in pids:
-            if os.path.isfile(process):
-                if self.__pid_stat("State:",process)=='S':
-                    count+=1
+            if self.__pid_stat("State:",process)=='S':
+                count+=1
         self.sleeping_process=count
     def threadsNum(self):
         count=0
         pids=self.parseDir()
         for process in pids:
-            if os.path.isfile(process):
-                count+=int(self.__pid_stat("Threads:",process))
+            count+=int(self.__pid_stat("Threads:",process))
         self.threads=count
     def run_queue_length(self):
         f=open("/proc/loadavg")
@@ -291,11 +240,14 @@ class metric:
     
         self.load_avgs = [float(x) for x in line.split()[:3]]
 
+a=metric("5","sda","wlp2s0")
 #a.disk_reads_writes_info()
+a.reset()
 
 #print a.recieve_bytes/1024.0
 #print a.transmit_bytes/1024.0
 #print a.transmit_packages
+print a.load_avgs
 #a.mem_stats()
 #a.cpu_percents()
 #print a.free_mem
