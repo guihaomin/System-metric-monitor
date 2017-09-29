@@ -4,7 +4,7 @@ import time
 import linux_metrics as lm
 def assemble(name,value,unit,interval,isCumulative,transform,description="NIL"):
     return "%s %f %s %d %s %s %s" % (name,value,unit,interval,isCumulative,transform,description)
-refresh_interval=15
+refresh_interval=1
 interval=5
 logger=logging.getLogger()
 formatter=logging.Formatter('%(asctime)s %(message)s')

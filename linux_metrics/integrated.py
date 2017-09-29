@@ -207,13 +207,15 @@ class metric:
         total=0
         pids=self.parseDirD()
         for process in pids:
-            total+=int(self.__pid_stat("read_bytes:",process))
+            if os.path.isfile(process):
+                total+=int(self.__pid_stat("read_bytes:",process))
         return total
     def writeSum(self):
         total=0
         pids=self.parseDirD()
         for process in pids:
-            total+=float(self.__pid_stat("write_bytes:",process))
+            if os.path.isfile(process):
+                total+=float(self.__pid_stat("write_bytes:",process))
         return total
     def __pid_stat(self,stat,dir="/proc/stat"):
         with open(dir) as f:
