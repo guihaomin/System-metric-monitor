@@ -3,7 +3,12 @@ import sys
 import time
 import linux_metrics as lm
 def assemble(name,value,unit,interval,isCumulative,transform,description="NIL"):
-    return "%s %f %s %d %s %s %s" % (name,value,unit,interval,isCumulative,transform,description)
+    return "%s %f %s %d %s %s %s %s" % (name,value,unit,interval,isCumulative,transform,description,host_name)
+def host_name():
+    with open("/etc/hostname") as f:
+        name=f.readline().strip('\n')
+    return name
+host_name=host_name()
 refresh_interval=5
 
 interval=5
@@ -13,7 +18,7 @@ file_handler=logging.FileHandler("metric.log")
 logger.addHandler(file_handler)
 logger.setLevel(logging.INFO)
 file_handler.setFormatter(formatter)
-met=lm.integrated.metric(interval,'sda',"eno0")
+met=lm.integrated.metric(interval,'sda',"wlp2s0")
 while True:
     print("sleeping...")
     time.sleep(refresh_interval)
@@ -41,15 +46,15 @@ while True:
     logger.info(used_mem)
     freed_mem=assemble("unused_physical_memory",met.free_mem,"%",0,"No","-")
     logger.info(freed_mem)
-    swap_in=assemble("swap-in",met.swap_in,"count",interval,"Yes","total")
+    swap_in=assemble("swap-in",met.swap_in,"count",interval,"Yes","mean")
     logger.info(swap_in)
-    swap_out=assemble("swap-out",met.swap_out,"count",interval,"Yes","total")
+    swap_out=assemble("swap-out",met.swap_out,"count",interval,"Yes","mean")
     logger.info(swap_out)
-    page_in=assemble("page-in",met.page_in,"count",interval,"Yes","total")
+    page_in=assemble("page-in",met.page_in,"count",interval,"Yes","mean")
     logger.info(page_in)
-    page_out=assemble("page-out",met.page_out,"count",interval,"Yes","total")
+    page_out=assemble("page-out",met.page_out,"count",interval,"Yes","mean")
     logger.info(page_out)
-    swap_total=assemble("swap-allocated",met.swap_total,"",0,"No","-")
+    swap_total=assemble("swap-allocated",met.swap_total,"byte",0,"No","-")
     logger.info(swap_total)
     disk_read=assemble("#physical_disk_read",met.reads_per_sec,"count",interval,"Yes","mean")
     logger.info(disk_read)

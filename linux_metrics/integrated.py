@@ -161,10 +161,10 @@ class metric:
                             swap_in2=int(line.split()[1])
                         elif line.startswith('pswpout'):
                             swap_out2=int(line.split()[1])
-                self.page_in=page_in2-page_in
-                self.page_out=page_out2-page_out
-                self.swap_in=swap_in2-swap_in
-                self.swap_out=swap_out2-swap_out
+                self.page_in=1.0*(page_in2-page_in)/self.sample_duration
+                self.page_out=1.0*(page_out2-page_out)/self.sample_duration
+                self.swap_in=1.0*(swap_in2-swap_in)/self.sample_duration
+                self.swap_out=1.0*(swap_out2-swap_out)/self.sample_duration
                 for n1 in open('/proc/net/dev'):
                     if self.interface in n1:
                         data = n1.split('%s:' % self.interface)[1].split()
