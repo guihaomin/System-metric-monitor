@@ -36,8 +36,8 @@ class metric:
         self.connections=0
         self.disconnections=0
         self.connections_before=[]
-    def reset(self):
-        self.disk_reads_writes_info()
+    def reset(self):             #refresh all data
+        self.get_after_sleeping()
         self.connection()
         self.mem_stats()
         self.cpu_percents()
@@ -115,19 +115,23 @@ class metric:
             'irq': percents[5],
             'softirq': percents[6],
         }
-    def disk_reads_writes_info(self): #it is actually combination of lots of operation.....
+    def get_after_sleeping(self): 
         """Return number of disk (reads, writes) per sec during the sample_duration."""
         connections_before=[]
         connections_after=[]
+
         readSum1=self.readSum()
         writeSum1=self.writeSum()
+        
         with open('/proc/diskstats') as f1:
             with open('/proc/diskstats') as f2:
-                f3=open('/proc/stat')
+                
+                f3=open('/proc/stat')      #open stat to read CPU INFO,f3(before sleeping, f4(after sleeping)
                 f4=open('/proc/stat')
-                with open('/proc/vmstat') as f:
+                
+                with open('/proc/vmstat') as f:#page index before sleeping
                     for line in f:
-                        if line.startswith('pgpgin'):
+                        if line.startswith('pgpgin'):  
                             page_in=int(line.split()[1])
                         elif line.startswith('pgpgout'):
                             page_out=int(line.split()[1])
@@ -135,23 +139,29 @@ class metric:
                             swap_in=int(line.split()[1])
                         elif line.startswith('pswpout'):
                             swap_out=int(line.split()[1])
-                for n1 in open('/proc/net/dev'):
+                            
+                for n1 in open('/proc/net/dev'):    #network info before sleeping
                     if self.interface in n1:
                         data = n1.split('%s:' % self.interface)[1].split()
                         rx_bytes, tx_bytes= (int(data[0]), int(data[8]))
                         rx_pack,tx_pack=(int(data[1]),int(data[9]))
-                line1=f3.readline()
-                content1 = f1.read()
-                self.list_connection(self.connections_before)
+                        
+                line1=f3.readline()   #read CPU INFO
+                
+                content1 = f1.read()  #read disk INFO
+                
+                self.list_connection(self.connections_before)  #list connections
                 
                 time.sleep(float(self.sample_duration))
 
-                self.list_connection(connections_after)
+                self.list_connection(connections_after) #list connections and calculate disconnections number
                 for item in self.connections_before:
                     if not item in connections_after:
                         self.disconnections+=1
-                content2 = f2.read()
-                with open('/proc/vmstat') as f:
+                        
+                content2 = f2.read() #read disk INFO
+                
+                with open('/proc/vmstat') as f:    #read page infos
                     for line in f:
                         if line.startswith('pgpgin'):
                             page_in2=int(line.split()[1])
@@ -161,15 +171,19 @@ class metric:
                             swap_in2=int(line.split()[1])
                         elif line.startswith('pswpout'):
                             swap_out2=int(line.split()[1])
+                #calculate page info result
                 self.page_in=1.0*(page_in2-page_in)/self.sample_duration
                 self.page_out=1.0*(page_out2-page_out)/self.sample_duration
                 self.swap_in=1.0*(swap_in2-swap_in)/self.sample_duration
                 self.swap_out=1.0*(swap_out2-swap_out)/self.sample_duration
+                #read network info
                 for n1 in open('/proc/net/dev'):
                     if self.interface in n1:
                         data = n1.split('%s:' % self.interface)[1].split()
                         rx_bytes2, tx_bytes2= (int(data[0]), int(data[8]))
                         rx_pack2,tx_pack2=(int(data[1]),int(data[9]))
+
+                #calculate network info
                 self.recieve_bytes=rx_bytes2-rx_bytes
                 self.transmit_bytes=tx_bytes2-tx_bytes
                 self.recieve_packages=rx_pack2-rx_pack
@@ -178,12 +192,17 @@ class metric:
                 self.recieve_packages/=float(self.sample_duration)
                 self.recieve_bytes/=float(self.sample_duration)
                 self.transmit_bytes/=float(self.sample_duration)
-                line2=f4.readline()
+                
+                line2=f4.readline()  #read CPU infos
                 f3.close()
                 f4.close()
-        self.deltas = [int(b) - int(a) for a, b in zip(line1.split()[1:], line2.split()[1:])]
+        self.deltas = [int(b) - int(a) for a, b in zip(line1.split()[1:], line2.split()[1:])]       #deltas is used in CPU_percents to calculate CPU info
+
+        #read total disk read counts
         readSum2=self.readSum()
         writeSum2=self.writeSum()
+
+        #read disk work info and calculate results
         sep = '%s ' % self.device
         found = False
         for line in content1.splitlines():
@@ -223,7 +242,7 @@ class metric:
         delta = int(io_ms2) - int(io_ms1)
         total = int(self.sample_duration) * 1000
         self.disk_busy=100 * (float(delta) / total)
-    def parseDirD(self):
+    def parseDirD(self):     #return all the io file path for all pids
         list=[]
         self.total_process=0
         files=os.listdir("/proc")
@@ -233,26 +252,26 @@ class metric:
                 list.append(os.path.join(m,"io"))
                 self.total_process+=1
         return list
-    def readSum(self):
+    def readSum(self):   #calculate sum of all disk_read bytes
         total=0
         pids=self.parseDirD()
         for process in pids:
             if os.path.isfile(process):
                 total+=int(self.__pid_stat("read_bytes:",process))
         return total
-    def writeSum(self):
+    def writeSum(self):    #calculate sum of all disk_write bytes
         total=0
         pids=self.parseDirD()
         for process in pids:
             if os.path.isfile(process):
                 total+=float(self.__pid_stat("write_bytes:",process))
         return total
-    def __pid_stat(self,stat,dir="/proc/stat"):
+    def __pid_stat(self,stat,dir="/proc/stat"):  #get assigned information in assigned file(/proc/stat default)
         with open(dir) as f:
             for line in f:
                 if line.startswith(stat):
                     return line.split()[1]
-    def parseDir(self):
+    def parseDir(self):              #return all the status file path for all pids
         list=[]
         self.total_process=0
         files=os.listdir("/proc")

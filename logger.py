@@ -1,7 +1,8 @@
 import logging
 import sys
 import time
-import linux_metrics as lm
+import linux_metrics.integrated as lm
+from logging.handlers import RotatingFileHandler   #assemble info into a string
 def assemble(name,value,unit,interval,isCumulative,transform,description="NIL"):
     return "%s %f %s %d %s %s %s %s" % (name,value,unit,interval,isCumulative,transform,description,host_name)
 def host_name():
@@ -9,16 +10,20 @@ def host_name():
         name=f.readline().strip('\n')
     return name
 host_name=host_name()
-refresh_interval=5
 
-interval=5
+refresh_interval=5     #sleep interval(seconds)
+
+interval=5             #data gathering interval(seconds)
 logger=logging.getLogger()
 formatter=logging.Formatter('%(asctime)s %(message)s')
-file_handler=logging.FileHandler("metric.log")
-logger.addHandler(file_handler)
+Rthandler = RotatingFileHandler('metric.log', maxBytes=10*1024*1024,backupCount=5)
+#file_handler=logging.FileHandler("metric.log")
+Rthandler.setLevel(logging.INFO)
 logger.setLevel(logging.INFO)
-file_handler.setFormatter(formatter)
-met=lm.integrated.metric(interval,'sda',"wlp2s0")
+#file_handler.setFormatter(formatter)
+Rthandler.setFormatter(formatter)
+logger.addHandler(Rthandler)
+met=lm.metric(interval,'sda',"wlp2s0")
 while True:
     print("sleeping...")
     time.sleep(refresh_interval)
