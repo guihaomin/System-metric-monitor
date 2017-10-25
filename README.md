@@ -11,35 +11,35 @@
 - Run Queue Length
 
 **Process/Threads**
-Total # Process
-Running Process
-Sleeping Process
-Threads
-Blocked Process
+- Total # Process
+- Running Process
+- Sleeping Process
+- Threads
+- Blocked Process
 
 **Memory**
-Used Physical Memory
-Unused Pysical Memory
-swap-in
-swap-out
-page-in
-page-out
-Amount of Swap Space Allocated
+- Used Physical Memory
+- Unused Pysical Memory
+- swap-in
+- swap-out
+- page-in
+- page-out
+- Amount of Swap Space Allocated
 
 **Disk**
-Pysical Disk Read
-Amount of Disk Physical Read
-Pysical Disk Write
-Amount of Disk Physical Write
-Disk Busy Time
+- Pysical Disk Read
+- Amount of Disk Physical Read
+- Pysical Disk Write
+- Amount of Disk Physical Write
+- Disk Busy Time
 
 **Network**
-Total # Incoming Packages
-Size of Incoming Packages
-Total # Outgoing Packages
-Size of outging packages
-Connections
-Disconnections
+- Total # Incoming Packages
+- Size of Incoming Packages
+- Total # Outgoing Packages
+- Size of outging packages
+- Connections
+- Disconnections
 
 # Log 
 - **format**
