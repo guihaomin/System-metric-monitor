@@ -3,6 +3,9 @@ import sys
 import time
 import linux_metrics.integrated as lm
 from logging.handlers import RotatingFileHandler   #assemble info into a string
+
+NETWORK_INTERFACE = 'eno1'
+
 def assemble(name,value,unit,interval,isCumulative,transform,description="NIL"):
     return "%s %f %s %d %s %s %s %s" % (name,value,unit,interval,isCumulative,transform,description,host_name)
 def host_name():
@@ -23,7 +26,7 @@ logger.setLevel(logging.INFO)
 #file_handler.setFormatter(formatter)
 Rthandler.setFormatter(formatter)
 logger.addHandler(Rthandler)
-met=lm.metric(interval,'sda',"wlp2s0")
+met=lm.metric(interval,'sda', NETWORK_INTERFACE)
 while True:
     print("sleeping...")
     time.sleep(refresh_interval)
