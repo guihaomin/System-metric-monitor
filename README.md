@@ -1,7 +1,7 @@
 # Run this metric collector
 `sudo python logger.py`
 > Intervals can be adjusted in logger.py
-> Interface and disk name can be specified in logger.py
+> Interface and disk name can be specified in logger.py( NETWORK_INTERFACE = 'eno1') eno1 is the interface that is used, make sure it corresponds to the information using ifconfig command.
 
 # Metric information include:
 **CPU**
